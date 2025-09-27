@@ -7,7 +7,7 @@ import { PostCard } from '@/components/posts/PostCard'
 export default async function HomePage() {
   const supabase = getSupabaseClient()
   const nowIso = new Date().toISOString()
-  const { data: latest = [] } = await supabase
+  const { data: latestData } = await supabase
     .from('posts')
     .select('id,title,slug,excerpt,status,updated_at,published_at')
     .eq('status', 'published')
@@ -15,6 +15,15 @@ export default async function HomePage() {
     .order('published_at', { ascending: false })
     .order('updated_at', { ascending: false })
     .limit(3)
+  const latest = (latestData ?? []) as Array<{
+    id: string | number
+    title: string
+    slug: string
+    excerpt: string | null
+    status: string
+    updated_at: string
+    published_at: string | null
+  }>
 
   return (
     <main>

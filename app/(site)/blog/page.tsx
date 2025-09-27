@@ -20,8 +20,17 @@ export default async function BlogIndexPage({ searchParams }: { searchParams: Pr
     query = query.or(`title.ilike.${like},excerpt.ilike.${like},slug.ilike.${like}`)
   }
 
-  const { data = [] } = await query
-  const posts = data
+  const { data } = await query
+  // Ensure we always have an array for rendering, even if Supabase returns null
+  const posts = (data ?? []) as Array<{
+    id: string | number
+    title: string
+    slug: string
+    excerpt: string | null
+    status: string
+    updated_at: string
+    published_at: string | null
+  }>
   const [featured, ...rest] = posts
 
   return (

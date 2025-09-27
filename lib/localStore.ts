@@ -24,7 +24,7 @@ export const localStore = {
   },
   upsert(input: Partial<LocalPost> & { title: string; slug: string; contentHtml: string; id?: string }): LocalPost {
     const now = new Date().toISOString()
-    const id = input.id ?? (globalThis.crypto?.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2))
+    const id = input.id ?? randomUUID()
     const existing = posts.get(id)
     const post: LocalPost = {
       id,
@@ -44,4 +44,4 @@ export const localStore = {
     return posts.delete(id)
   },
 }
-
+import { randomUUID } from 'node:crypto'

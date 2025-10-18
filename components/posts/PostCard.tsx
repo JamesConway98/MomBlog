@@ -6,30 +6,44 @@ type Props = {
   slug: string
   excerpt?: string
   coverUrl?: string
+  coverAlt?: string
   updatedAt?: string
   status?: string
 }
 
-export function PostCard({ title, slug, excerpt, coverUrl, updatedAt, status }: Props) {
+export function PostCard({ title, slug, excerpt, coverUrl, coverAlt, updatedAt, status }: Props) {
   return (
-    <article className="card p-5 card-hover">
-      <div className="aspect-[16/9] w-full rounded-xl overflow-hidden bg-[rgba(255,240,245,.7)]">
+    <article className="flex flex-col gap-4 border-t border-black/10 pt-6 first:border-t-0 first:pt-0">
+      <div className="flex flex-col gap-4 sm:flex-row">
         {coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={coverUrl} alt="" className="h-full w-full object-cover" />
+          <div className="relative sm:w-48">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={coverUrl}
+              alt={coverAlt || `${title} cover image`}
+              className="h-full w-full rounded-xl object-cover"
+            />
+          </div>
         ) : null}
+        <div>
+          <h3 className="font-serif text-2xl leading-snug headline">
+            <Link href={`/blog/${slug}`} className="transition-colors hover:text-[hsl(var(--primary))]">
+              {title}
+            </Link>
+          </h3>
+          {excerpt ? (
+            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+              {excerpt}
+            </p>
+          ) : null}
+        </div>
       </div>
-      <h3 className="mt-4 text-lg font-medium">
-        <Link href={`/blog/${slug}`} className="hover:underline">{title}</Link>
-      </h3>
-      {excerpt ? <p className="mt-1 text-sm text-muted-foreground">{excerpt}</p> : null}
       {(updatedAt || status) ? (
-        <p className="mt-2 text-xs text-muted-foreground">
-          {status ? <span className="mr-2 capitalize">{status}</span> : null}
+        <p className="text-[0.68rem] uppercase tracking-[0.38em] text-muted-foreground">
+          {status ? <span className="mr-3">{status}</span> : null}
           {updatedAt ? `Updated ${formatDate(updatedAt)}` : null}
         </p>
       ) : null}
-      <Link href={`/blog/${slug}`} className="mt-3 inline-flex text-sm link">Read more →</Link>
     </article>
   )
 }

@@ -1,14 +1,35 @@
 export function NewsletterSignup() {
   return (
-    <section id="newsletter" className="container mx-auto py-12 scroll-mt-24">
-      <div className="card p-8 md:p-10 text-center">
-        <h2 className="text-2xl section-title">Join the newsletter</h2>
-        <p className="mt-2 text-sm text-muted-foreground">A friendly note in your inbox now and then — no spam.</p>
-        <form className="mt-6 mx-auto max-w-md flex gap-2" action="/api/newsletter/subscribe" method="post">
-          <input name="email" type="email" placeholder="you@example.com" className="flex-1 border rounded-xl px-3 py-3 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" required />
-          <button className="btn btn-primary px-5 py-3 rounded-xl" type="submit">Subscribe</button>
-        </form>
-        <p className="mt-4 signature">xo, Angelise</p>
+    <section id="newsletter" className="scroll-mt-24 border-y border-black/10 bg-white">
+      <div className="container mx-auto px-4 py-16">
+        <div className="grid gap-10 md:grid-cols-[2fr,3fr] md:items-center">
+          <div>
+            <p className="eyebrow">Newsletter</p>
+            <h2 className="mt-4 text-3xl md:text-4xl font-serif headline">
+              Stay with the story.
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground md:max-w-prose">
+              Sign up for the Sunday dispatch: one feature, a handful of quick reads, and
+              the moments worth savoring.
+            </p>
+          </div>
+          <form
+            className="flex flex-col gap-4 md:flex-row md:items-center"
+            action="/api/newsletter/subscribe"
+            method="post"
+          >
+            <input
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              className="w-full flex-1 border border-black/40 bg-transparent px-4 py-3 text-base uppercase tracking-[0.2em] focus:border-black focus:outline-none"
+              required
+            />
+            <button className="btn btn-primary" type="submit">
+              Subscribe
+            </button>
+          </form>
+        </div>
       </div>
     </section>
   )

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { PostCard } from '@/components/posts/PostCard'
 import { getSupabaseClient } from '@/lib/supabase'
 
@@ -9,7 +10,7 @@ export default async function BlogIndexPage({ searchParams }: { searchParams: Pr
   const nowIso = new Date().toISOString()
   let query = supabase
     .from('posts')
-    .select('id,title,slug,excerpt,status,updated_at,published_at')
+    .select('id,title,slug,excerpt,status,updated_at,published_at,cover_image_url,cover_image_alt')
     .eq('status', 'published')
     .or(`published_at.is.null,published_at.lte.${nowIso}`)
     .order('published_at', { ascending: false })
@@ -30,6 +31,8 @@ export default async function BlogIndexPage({ searchParams }: { searchParams: Pr
     status: string
     updated_at: string
     published_at: string | null
+    cover_image_url: string | null
+    cover_image_alt: string | null
   }>
   const [featured, ...rest] = posts
 
@@ -74,7 +77,17 @@ export default async function BlogIndexPage({ searchParams }: { searchParams: Pr
                   {featured.excerpt ? <p className="mt-2 text-sm text-muted-foreground">{featured.excerpt}</p> : null}
                   <Link href={`/blog/${featured.slug}`} className="mt-4 inline-flex btn btn-primary px-4 py-2 rounded-xl">Read post</Link>
                 </div>
-                <div className="aspect-[16/10] w-full rounded-xl bg-[rgba(255,240,245,.7)]" />
+                <div className="aspect-[16/10] w-full overflow-hidden rounded-xl border border-black/10 bg-[rgba(255,240,245,.7)] relative">
+                  {featured.cover_image_url ? (
+                    <Image
+                      src={featured.cover_image_url}
+                      alt={featured.cover_image_alt || `${featured.title} cover image`}
+                      fill
+                      sizes="(min-width: 1024px) 50vw, 100vw"
+                      className="object-cover"
+                    />
+                  ) : null}
+                </div>
               </div>
             </section>
           ) : null}
@@ -83,7 +96,16 @@ export default async function BlogIndexPage({ searchParams }: { searchParams: Pr
             <section className="mt-8">
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {rest.map((p) => (
-                  <PostCard key={p.id} title={p.title} slug={p.slug} excerpt={p.excerpt || ''} updatedAt={p.updated_at} status={p.status as any} />
+                  <PostCard
+                    key={p.id}
+                    title={p.title}
+                    slug={p.slug}
+                    excerpt={p.excerpt || ''}
+                    coverUrl={p.cover_image_url || undefined}
+                    coverAlt={p.cover_image_alt || undefined}
+                    updatedAt={p.updated_at}
+                    status={p.status as any}
+                  />
                 ))}
               </div>
             </section>

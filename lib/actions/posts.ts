@@ -15,6 +15,25 @@ export async function savePost(formData: FormData) {
     excerpt: z.string().optional(),
     status: z.enum(['draft', 'published', 'scheduled']).default('draft'),
     publishedAt: z.string().optional().transform((v) => (v && v.length ? v : undefined)),
+    coverImageUrl: z
+      .string()
+      .trim()
+      .optional()
+      .transform((v) => (v && v.length ? v : undefined)),
+    coverImageAlt: z
+      .string()
+      .trim()
+      .optional()
+      .transform((v) => (v && v.length ? v : undefined)),
+  })
+  .superRefine((data, ctx) => {
+    if (data.coverImageUrl && !data.coverImageAlt) {
+      ctx.addIssue({
+        path: ['coverImageAlt'],
+        code: z.ZodIssueCode.custom,
+        message: 'Cover image alt text is required when a cover image is set',
+      })
+    }
   })
 
   const parsed = schema.parse({
@@ -25,7 +44,12 @@ export async function savePost(formData: FormData) {
     excerpt: formData.get('excerpt'),
     status: formData.get('status') ?? 'draft',
     publishedAt: formData.get('publishedAt'),
+    coverImageUrl: formData.get('coverImageUrl'),
+    coverImageAlt: formData.get('coverImageAlt'),
   })
+
+  const coverImageUrl = parsed.coverImageUrl ?? null
+  const coverImageAlt = coverImageUrl ? parsed.coverImageAlt ?? null : null
 
   const post = await upsertPost({
     id: parsed.id,
@@ -35,6 +59,8 @@ export async function savePost(formData: FormData) {
     excerpt: parsed.excerpt,
     status: parsed.status,
     publishedAt: parsed.publishedAt ?? null,
+    coverImageUrl,
+    coverImageAlt,
   })
 
   // Revalidate admin listing and the public blog

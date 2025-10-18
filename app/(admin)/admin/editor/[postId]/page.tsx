@@ -19,6 +19,8 @@ export default async function AdminEditorPage({ params }: Props) {
         excerpt: post.excerpt || undefined,
         status: post.status,
         publishedAt: post.published_at || undefined,
+        coverImageUrl: post.cover_image_url || undefined,
+        coverImageAlt: post.cover_image_alt || undefined,
       } : undefined} />
     </main>
   )

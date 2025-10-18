@@ -8,6 +8,7 @@ export type DbPost = {
   content_mdx: string | null
   excerpt: string | null
   cover_image_url: string | null
+  cover_image_alt: string | null
   status: 'draft' | 'published' | 'scheduled'
   published_at: string | null
   created_at: string
@@ -50,6 +51,8 @@ export async function upsertPost(input: {
   status?: 'draft' | 'published' | 'scheduled'
   publishedAt?: string | null
   canonicalUrl?: string | null
+  coverImageUrl?: string | null
+  coverImageAlt?: string | null
 }): Promise<DbPost> {
   const supabase = getSupabaseClient()
 
@@ -61,6 +64,8 @@ export async function upsertPost(input: {
     slug: input.slug,
     content_mdx: input.contentHtml ?? null,
     excerpt: input.excerpt ?? null,
+    cover_image_url: input.coverImageUrl ?? null,
+    cover_image_alt: input.coverImageAlt ?? null,
     status: (input.status ?? 'draft') as DbPost['status'],
     published_at: input.publishedAt ? new Date(input.publishedAt).toISOString() : null,
     canonical_url: input.canonicalUrl ?? null,

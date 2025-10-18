@@ -18,6 +18,7 @@ create table if not exists public.posts (
   content_mdx text,
   excerpt text,
   cover_image_url text,
+  cover_image_alt text,
   status text not null default 'draft' check (status in ('draft','published','scheduled')),
   published_at timestamptz,
   created_at timestamptz not null default now(),

@@ -1,4 +1,4 @@
-import { authMiddleware, createRouteMatcher, clerkClient } from '@clerk/nextjs/server'
+import { authMiddleware, clerkClient, createRouteMatcher, redirectToSignIn } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { DEFAULT_ADMINS } from '@/lib/auth'
 
@@ -11,7 +11,7 @@ export default authMiddleware({
     }
 
     if (!auth.userId) {
-      return auth.redirectToSignIn({ returnBackUrl: req.url })
+      return redirectToSignIn({ returnBackUrl: req.url })
     }
 
     try {

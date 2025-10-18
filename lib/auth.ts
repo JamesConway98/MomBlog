@@ -1,28 +1,39 @@
-import { headers } from 'next/headers'
-import { NextRequest } from 'next/server'
-import { clerkClient, getAuth } from '@clerk/nextjs/server'
+import { auth, clerkClient } from '@clerk/nextjs/server'
 
 export const DEFAULT_ADMINS = ['jamesconway272@gmail.com', 'angelisetorresa@gmail.com']
 
-export async function getAuthState() {
-  const headerList = await headers()
-  const request = new NextRequest('https://placeholder.com', { headers: headerList })
-  return getAuth(request)
+type ClerkClient = Awaited<ReturnType<typeof clerkClient>>
+type AdminUser = Awaited<ReturnType<ClerkClient['users']['getUser']>>
+
+function isAllowedAdmin(user: AdminUser) {
+  const allowedEmails = (process.env.ADMIN_EMAILS || DEFAULT_ADMINS.join(','))
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+  const userEmails = user.emailAddresses?.map((entry) => entry.emailAddress.toLowerCase()) || []
+  return userEmails.some((email) => allowedEmails.includes(email))
 }
 
-export async function requireAdmin() {
-  const auth = await getAuthState()
-  if (!auth.userId) throw new Error('Not authenticated')
+export async function getAuthState(request?: Request) {
+  if (request) {
+    const { userId } = await auth(request)
+    return { userId }
+  }
+  const { userId } = await auth()
+  return { userId }
+}
 
-  const client = clerkClient()
-  const user = await client.users.getUser(auth.userId)
-  const allowed = (process.env.ADMIN_EMAILS || DEFAULT_ADMINS.join(','))
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)
-  const emails = user.emailAddresses?.map((e) => e.emailAddress.toLowerCase()) || []
-  const isAdmin = emails.some((email) => allowed.includes(email))
-  if (!isAdmin) throw new Error('Not authorized')
+export async function requireAdmin(request?: Request) {
+  const { userId } = await getAuthState(request)
+  if (!userId) throw new Error('Not authenticated')
+
+  const client = await clerkClient()
+  const user = await client.users.getUser(userId)
+  console.info('[requireAdmin] verified user', userId)
+
+  if (!isAllowedAdmin(user)) {
+    throw new Error('Not authorized')
+  }
 
   return user
 }

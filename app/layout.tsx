@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable}`}>
+    <html lang="en" className={`${display.variable} ${sans.variable}`} data-scroll-behavior="smooth">
       <body className="min-h-screen antialiased bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
         <Header />
         <div>{children}</div>

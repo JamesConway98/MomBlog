@@ -64,10 +64,15 @@ export default async function HomePage() {
     postsByCategory.set(post.primary_category_id, list)
   })
 
-  const orderedCategories = Array.from(SECTION_CATEGORIES).map((label) => ({
-    label,
-    record: categoriesByName.get(label)
-  }))
+  const orderedCategories = Array.from(SECTION_CATEGORIES).map((label) => {
+    const record = categoriesByName.get(label)
+    const posts = record ? postsByCategory.get(record.id) ?? [] : []
+    return { label, record, posts }
+  })
+
+  const categoriesToShow = orderedCategories.filter(
+    ({ record, posts }) => Boolean(record) && posts.length > 0
+  )
 
   const [featurePost, ...restPosts] = latest
   const supportingPosts = restPosts.slice(0, 4)
@@ -173,9 +178,10 @@ export default async function HomePage() {
       <section className="border-b border-black/10 bg-white">
         <div className="container mx-auto px-4 py-12">
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
-            {orderedCategories.map(({ label, record }) => {
-              const categoryPosts = record ? postsByCategory.get(record.id) ?? [] : []
-              const topPost = categoryPosts[0]
+            {categoriesToShow.map(({ label, record, posts }) => {
+              if (!record) return null
+              const topPost = posts[0]
+              if (!topPost) return null
 
               return (
                 <div key={label} className="flex flex-col gap-4 border-t border-black/10 pt-6">
@@ -185,27 +191,21 @@ export default async function HomePage() {
                   >
                     {label}
                   </Link>
-                  {topPost ? (
-                    <div className="space-y-3">
-                      <h3 className="font-serif text-xl leading-snug">
-                        <Link
-                          href={`/blog/${topPost.slug}`}
-                          className="transition-colors hover:text-[hsl(var(--primary))]"
-                        >
-                          {topPost.title}
-                        </Link>
-                      </h3>
-                      {topPost.excerpt ? (
-                        <p className="text-sm leading-relaxed text-muted-foreground">
-                          {topPost.excerpt}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <p className="text-xs leading-relaxed text-muted-foreground">
-                      Assign a post to this category to feature it here.
-                    </p>
-                  )}
+                  <div className="space-y-3">
+                    <h3 className="font-serif text-xl leading-snug">
+                      <Link
+                        href={`/blog/${topPost.slug}`}
+                        className="transition-colors hover:text-[hsl(var(--primary))]"
+                      >
+                        {topPost.title}
+                      </Link>
+                    </h3>
+                    {topPost.excerpt ? (
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {topPost.excerpt}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               )
             })}

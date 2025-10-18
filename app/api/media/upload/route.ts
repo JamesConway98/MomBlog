@@ -45,8 +45,9 @@ function sanitizeFileName(fileName: string) {
 
 export async function POST(req: Request) {
   try {
-    await requireAdmin()
-  } catch {
+    await requireAdmin(req)
+  } catch (error) {
+    console.error('[media/upload] unauthorized', error)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

@@ -13,6 +13,7 @@ create table if not exists public.profiles (
 create table if not exists public.posts (
   id uuid primary key default uuid_generate_v4(),
   author_id uuid references public.profiles(id),
+  primary_category_id integer,
   title text not null,
   slug text not null unique,
   content_mdx text,
@@ -37,6 +38,15 @@ create table if not exists public.categories (
   id serial primary key,
   name text not null unique
 );
+
+alter table if exists public.posts
+  add column if not exists primary_category_id integer;
+
+alter table if exists public.posts
+  add constraint if not exists posts_primary_category_id_fkey
+  foreign key (primary_category_id) references public.categories(id);
+
+create index if not exists idx_posts_primary_category_id on public.posts(primary_category_id);
 
 -- post_tags (join)
 create table if not exists public.post_tags (

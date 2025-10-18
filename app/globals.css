@@ -149,3 +149,47 @@ a {
 .ProseMirror figure {
   margin: 1.5rem 0;
 }
+
+.ProseMirror ul,
+.ProseMirror ol {
+  margin-left: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.ProseMirror ul {
+  list-style: disc;
+}
+
+.ProseMirror ol {
+  list-style: decimal;
+}
+
+.ProseMirror li {
+  margin: 0.4rem 0;
+}
+
+.ProseMirror h2 {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.ProseMirror h3,
+.ProseMirror h4 {
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid hsl(var(--primary));
+  padding-left: 1rem;
+  margin: 2rem 0;
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+  background: rgba(255, 233, 240, 0.3);
+  border-radius: 0 0.75rem 0.75rem 0;
+}

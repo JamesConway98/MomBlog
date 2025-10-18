@@ -9,9 +9,19 @@ type Props = {
   coverAlt?: string
   updatedAt?: string
   status?: string
+  categoryName?: string
 }
 
-export function PostCard({ title, slug, excerpt, coverUrl, coverAlt, updatedAt, status }: Props) {
+export function PostCard({
+  title,
+  slug,
+  excerpt,
+  coverUrl,
+  coverAlt,
+  updatedAt,
+  status,
+  categoryName
+}: Props) {
   return (
     <article className="flex flex-col gap-4 border-t border-black/10 pt-6 first:border-t-0 first:pt-0">
       <div className="flex flex-col gap-4 sm:flex-row">
@@ -26,6 +36,11 @@ export function PostCard({ title, slug, excerpt, coverUrl, coverAlt, updatedAt, 
           </div>
         ) : null}
         <div>
+          {categoryName ? (
+            <p className="text-[0.6rem] uppercase tracking-[0.32em] text-muted-foreground">
+              {categoryName}
+            </p>
+          ) : null}
           <h3 className="font-serif text-2xl leading-snug headline">
             <Link href={`/blog/${slug}`} className="transition-colors hover:text-[hsl(var(--primary))]">
               {title}

@@ -1,5 +1,5 @@
 import { headers } from 'next/headers'
-import { auth, currentUser } from '@clerk/nextjs/server'
+import { getAuthState, requireAdmin, DEFAULT_ADMINS } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -8,14 +8,19 @@ export const runtime = 'nodejs'
 export default async function AdminDebugPage() {
   const h = await headers()
   const cookieHeader = h.get('cookie') || ''
-  const session = await auth()
-  const user = await currentUser()
-  const claims = (session as any)?.sessionClaims || {}
-  const email: string | undefined = (claims as any)?.email || (claims as any)?.primary_email || (claims as any)?.primary_email_address || user?.emailAddresses?.[0]?.emailAddress
-  const allowed = (process.env.ADMIN_EMAILS || 'jamesconway272@gmail.com,angelisetorresa@gmail.com')
+  const auth = await getAuthState()
+  const user = await requireAdmin()
+  const claims = auth.sessionClaims || {}
+  const email =
+    (claims as any)?.email ||
+    (claims as any)?.primary_email ||
+    (claims as any)?.primary_email_address ||
+    user.emailAddresses?.[0]?.emailAddress
+  const allowed = (process.env.ADMIN_EMAILS || DEFAULT_ADMINS.join(','))
     .split(',')
     .map((e) => e.trim().toLowerCase())
-  const emails = (user?.emailAddresses || []).map((e) => e.emailAddress.toLowerCase())
+    .filter(Boolean)
+  const emails = (user.emailAddresses || []).map((e) => e.emailAddress.toLowerCase())
   const isAllowed = email ? allowed.includes(email.toLowerCase()) : false
 
   return (
@@ -25,7 +30,7 @@ export default async function AdminDebugPage() {
         <pre className="text-xs whitespace-pre-wrap break-all">{JSON.stringify({
           runtime: 'nodejs',
           cookieHasSession: /__session=/.test(cookieHeader),
-          userId: session?.userId || null,
+          userId: auth.userId || null,
           email,
           emails,
           allowed,
@@ -36,4 +41,3 @@ export default async function AdminDebugPage() {
     </main>
   )
 }
-

@@ -9,6 +9,7 @@ export type DbPost = {
   excerpt: string | null
   cover_image_url: string | null
   cover_image_alt: string | null
+  primary_category_id: number | null
   status: 'draft' | 'published' | 'scheduled'
   published_at: string | null
   created_at: string
@@ -53,6 +54,7 @@ export async function upsertPost(input: {
   canonicalUrl?: string | null
   coverImageUrl?: string | null
   coverImageAlt?: string | null
+  primaryCategoryId?: number | null
 }): Promise<DbPost> {
   const supabase = getSupabaseClient()
 
@@ -66,6 +68,7 @@ export async function upsertPost(input: {
     excerpt: input.excerpt ?? null,
     cover_image_url: input.coverImageUrl ?? null,
     cover_image_alt: input.coverImageAlt ?? null,
+    primary_category_id: input.primaryCategoryId ?? null,
     status: (input.status ?? 'draft') as DbPost['status'],
     published_at: input.publishedAt ? new Date(input.publishedAt).toISOString() : null,
     canonical_url: input.canonicalUrl ?? null,
@@ -76,6 +79,7 @@ export async function upsertPost(input: {
     .upsert(row, { onConflict: 'id' })
     .select('*')
     .single()
+
   if (error) throw error
   return data as DbPost
 }

@@ -15,6 +15,10 @@ export async function savePost(formData: FormData) {
     excerpt: z.string().optional(),
     status: z.enum(['draft', 'published', 'scheduled']).default('draft'),
     publishedAt: z.string().optional().transform((v) => (v && v.length ? v : undefined)),
+    primaryCategoryId: z
+      .union([z.literal(''), z.coerce.number().int().positive()])
+      .optional()
+      .transform((value) => (typeof value === 'number' ? value : null)),
     coverImageUrl: z
       .string()
       .trim()
@@ -44,24 +48,33 @@ export async function savePost(formData: FormData) {
     excerpt: formData.get('excerpt'),
     status: formData.get('status') ?? 'draft',
     publishedAt: formData.get('publishedAt'),
+    primaryCategoryId: formData.get('primaryCategoryId') ?? '',
     coverImageUrl: formData.get('coverImageUrl'),
     coverImageAlt: formData.get('coverImageAlt'),
   })
 
   const coverImageUrl = parsed.coverImageUrl ?? null
   const coverImageAlt = coverImageUrl ? parsed.coverImageAlt ?? null : null
+  const primaryCategoryId = parsed.primaryCategoryId ?? null
 
-  const post = await upsertPost({
-    id: parsed.id,
-    title: parsed.title,
-    slug: parsed.slug,
-    contentHtml: parsed.contentHtml,
-    excerpt: parsed.excerpt,
-    status: parsed.status,
-    publishedAt: parsed.publishedAt ?? null,
-    coverImageUrl,
-    coverImageAlt,
-  })
+  let post
+  try {
+    post = await upsertPost({
+      id: parsed.id,
+      title: parsed.title,
+      slug: parsed.slug,
+      contentHtml: parsed.contentHtml,
+      excerpt: parsed.excerpt,
+      status: parsed.status,
+      publishedAt: parsed.publishedAt ?? null,
+      coverImageUrl,
+      coverImageAlt,
+      primaryCategoryId,
+    })
+  } catch (error: any) {
+    console.error('Failed to upsert post', error)
+    throw new Error(error?.message || 'Unable to save post')
+  }
 
   // Revalidate admin listing and the public blog
   revalidatePath('/admin/posts')

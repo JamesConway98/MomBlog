@@ -1,5 +1,6 @@
 import { adminGetPost } from '@/lib/actions/posts'
 import { PostEditorForm } from '@/components/editor/PostEditorForm'
+import { listCategories } from '@/lib/data/categories'
 
 type Props = { params: Promise<{ postId: string }> }
 
@@ -7,6 +8,7 @@ export default async function AdminEditorPage({ params }: Props) {
   const { postId } = await params
   const isNew = postId === 'new'
   const post = isNew ? undefined : await adminGetPost(postId)
+  const categories = await listCategories()
 
   return (
     <main className="container mx-auto py-10">
@@ -21,7 +23,8 @@ export default async function AdminEditorPage({ params }: Props) {
         publishedAt: post.published_at || undefined,
         coverImageUrl: post.cover_image_url || undefined,
         coverImageAlt: post.cover_image_alt || undefined,
-      } : undefined} />
+        primaryCategoryId: post.primary_category_id ?? undefined,
+      } : undefined} categories={categories} />
     </main>
   )
 }

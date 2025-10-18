@@ -4,6 +4,7 @@ import { TipTapEditor } from '@/components/editor/TipTapEditor'
 import { slugify } from '@/lib/utils'
 import { savePost } from '@/lib/actions/posts'
 import { useFormStatus } from 'react-dom'
+import type { DbCategory } from '@/lib/data/categories'
 
 type Initial = {
   id?: string
@@ -15,9 +16,10 @@ type Initial = {
   publishedAt?: string
   coverImageUrl?: string
   coverImageAlt?: string
+  primaryCategoryId?: number
 }
 
-export function PostEditorForm({ initial }: { initial?: Initial }) {
+export function PostEditorForm({ initial, categories }: { initial?: Initial; categories: DbCategory[] }) {
   const [contentHtml, setContentHtml] = useState(initial?.contentHtml || '')
   const [coverImageUrl, setCoverImageUrl] = useState(initial?.coverImageUrl || '')
   const [coverImageAlt, setCoverImageAlt] = useState(initial?.coverImageAlt || '')
@@ -168,6 +170,24 @@ export function PostEditorForm({ initial }: { initial?: Initial }) {
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Details</p>
             <p className="mt-1 text-sm text-muted-foreground">Slug, excerpt, and status control how your post appears around the site.</p>
+          </div>
+          <div>
+            <label className="block text-sm mb-1">Section</label>
+            <select
+              name="primaryCategoryId"
+              defaultValue={initial?.primaryCategoryId ? String(initial.primaryCategoryId) : ''}
+              className="w-full border rounded-xl px-3 py-2 focus:border-black/60 focus:outline-none focus:ring-2 focus:ring-black/10 transition"
+            >
+              <option value="">Unassigned</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Choose where the post should appear on the homepage (Ideas, Home, Travel, Field Notes, or Letters).
+            </p>
           </div>
           <div>
             <label className="block text-sm mb-1">Slug</label>

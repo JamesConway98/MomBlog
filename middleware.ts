@@ -1,26 +1,38 @@
-import { clerkMiddleware, createRouteMatcher, clerkClient } from "@clerk/nextjs/server"
+import { authMiddleware, createRouteMatcher, clerkClient } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
+import { DEFAULT_ADMINS } from '@/lib/auth'
 
-const isAdminRoute = createRouteMatcher(["/admin(.*)"])
+const isAdminRoute = createRouteMatcher(['/admin(.*)'])
 
-export default clerkMiddleware(async (auth, req) => {
-  if (isAdminRoute(req)) {
-    const session = await auth()
-    if (!session.userId) {
-      return session.redirectToSignIn()
+export default authMiddleware({
+  async afterAuth(auth, req) {
+    if (!isAdminRoute(req)) {
+      return NextResponse.next()
     }
+
+    if (!auth.userId) {
+      return auth.redirectToSignIn({ returnBackUrl: req.url })
+    }
+
     try {
-      const client = await clerkClient()
-      const user = await client.users.getUser(session.userId)
-      const emails = user.emailAddresses?.map((e) => e.emailAddress.toLowerCase()) || []
-      const allowed = (process.env.ADMIN_EMAILS || 'jamesconway272@gmail.com,angelisetorresa@gmail.com')
+      const client = clerkClient()
+      const user = await client.users.getUser(auth.userId)
+      const allowed = (process.env.ADMIN_EMAILS || DEFAULT_ADMINS.join(','))
         .split(',')
-        .map((e) => e.trim().toLowerCase())
-      const isAllowed = emails.some((e) => allowed.includes(e))
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
+      const emails = user.emailAddresses?.map((email) => email.emailAddress.toLowerCase()) || []
+      const isAllowed = emails.some((email) => allowed.includes(email))
+
       if (!isAllowed) {
-        return Response.redirect(new URL('/', req.url))
+        return NextResponse.redirect(new URL('/', req.url))
       }
-    } catch {}
-  }
+    } catch {
+      return NextResponse.redirect(new URL('/', req.url))
+    }
+
+    return NextResponse.next()
+  },
 })
 
 export const config = {

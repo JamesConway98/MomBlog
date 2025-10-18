@@ -29,7 +29,17 @@ create index if not exists idx_posts_author_id on public.posts(author_id);
 create index if not exists idx_post_tags_post_id on public.post_tags(post_id);
 create index if not exists idx_post_tags_tag_id on public.post_tags(tag_id);
 
--- 4) Profiles: auto-create profile row on new auth user
+-- 4) Seed canonical editorial categories
+insert into public.categories (name)
+values
+  ('Ideas'),
+  ('Home'),
+  ('Travel'),
+  ('Field Notes'),
+  ('Letters')
+on conflict (name) do nothing;
+
+-- 5) Profiles: auto-create profile row on new auth user
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -48,7 +58,7 @@ create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
 
--- 5) RLS policies
+-- 6) RLS policies
 -- Note: RLS is enabled in schema.sql. These policies grant public read to published posts
 -- and authenticated author/admin write access. Admin is determined via profiles.role = 'admin'.
 
@@ -194,4 +204,3 @@ create policy "Admin read profiles"
 
 -- Optional: elevate a specific user to admin (replace 00000000-0000-0000-0000-000000000000)
 -- update public.profiles set role = 'admin' where id = '00000000-0000-0000-0000-000000000000';
-

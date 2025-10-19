@@ -28,6 +28,9 @@ create index if not exists idx_posts_status_published_at on public.posts(status,
 create index if not exists idx_posts_author_id on public.posts(author_id);
 create index if not exists idx_post_tags_post_id on public.post_tags(post_id);
 create index if not exists idx_post_tags_tag_id on public.post_tags(tag_id);
+create index if not exists idx_comments_post_id on public.comments(post_id);
+create index if not exists idx_comments_upvotes on public.comments(upvote_count desc);
+create index if not exists idx_comment_votes_comment_id on public.comment_votes(comment_id);
 
 -- 4) Seed canonical editorial categories
 insert into public.categories (name)
@@ -159,6 +162,110 @@ create policy "User insert own media rows"
     uploader_id = auth.uid()
     or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
   );
+
+-- comments
+create policy "Public read approved comments"
+  on public.comments for select to anon
+  using (status = 'approved');
+
+create policy "Public submit comments"
+  on public.comments for insert to anon
+  with check (status = 'approved');
+
+create policy "Admins manage comments"
+  on public.comments for all to authenticated
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
+  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+
+-- comment_votes
+create policy "Public interact with comment_votes"
+  on public.comment_votes for all to anon
+  using (true)
+  with check (true);
+
+-- Keep comment_votes updated_at fresh
+create or replace function public.touch_comment_vote_updated_at()
+returns trigger
+language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end
+$$;
+
+drop trigger if exists set_comment_votes_updated_at on public.comment_votes;
+create trigger set_comment_votes_updated_at
+before update on public.comment_votes
+for each row execute function public.touch_comment_vote_updated_at();
+
+-- Voting helper
+create or replace function public.vote_on_comment(
+  p_comment_id uuid,
+  p_voter_id uuid,
+  p_vote text
+)
+returns table (
+  comment_id uuid,
+  upvote_count integer,
+  downvote_count integer,
+  user_vote text
+)
+language plpgsql
+security definer
+set search_path = public as $$
+declare
+  existing_vote text;
+  final_vote text;
+begin
+  if p_vote not in ('up','down') then
+    raise exception 'Invalid vote type %', p_vote;
+  end if;
+
+  select vote into existing_vote
+  from public.comment_votes cv
+  where cv.comment_id = p_comment_id
+    and cv.voter_id = p_voter_id;
+
+  if existing_vote is null then
+    insert into public.comment_votes (comment_id, voter_id, vote)
+    values (p_comment_id, p_voter_id, p_vote)
+    returning vote into final_vote;
+  elsif existing_vote = p_vote then
+    delete from public.comment_votes
+    where public.comment_votes.comment_id = p_comment_id
+      and public.comment_votes.voter_id = p_voter_id;
+    final_vote := null;
+  else
+    update public.comment_votes
+    set vote = p_vote
+    where public.comment_votes.comment_id = p_comment_id
+      and public.comment_votes.voter_id = p_voter_id
+    returning vote into final_vote;
+  end if;
+
+  update public.comments
+    set
+      upvote_count = (
+        select count(*)
+        from public.comment_votes cv_up
+        where cv_up.comment_id = p_comment_id and cv_up.vote = 'up'
+      ),
+      downvote_count = (
+        select count(*)
+        from public.comment_votes cv_down
+        where cv_down.comment_id = p_comment_id and cv_down.vote = 'down'
+      )
+    where id = p_comment_id;
+
+  return query
+    select c.id as comment_id,
+           c.upvote_count,
+           c.downvote_count,
+           final_vote as user_vote
+    from public.comments c
+    where c.id = p_comment_id;
+end
+$$;
 
 create policy "User update own media rows"
   on public.media for update to authenticated

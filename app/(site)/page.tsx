@@ -98,7 +98,16 @@ export default async function HomePage() {
             <div>
               <p className="eyebrow">{featureCategory ? featureCategory.name : 'Featured'}</p>
               <h1 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-serif headline">
-                {featurePost?.title ?? 'Inside the Angelise Journal'}
+                {featurePost ? (
+                  <Link
+                    href={`/blog/${featurePost.slug}`}
+                    className="transition-colors hover:text-[hsl(var(--primary))]"
+                  >
+                    {featurePost.title}
+                  </Link>
+                ) : (
+                  'Inside the Angelise Journal'
+                )}
               </h1>
               <p className="mt-6 lede">
                 {featurePost?.excerpt ??

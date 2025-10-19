@@ -55,6 +55,29 @@ create table if not exists public.post_tags (
   primary key (post_id, tag_id)
 );
 
+-- comments
+create table if not exists public.comments (
+  id uuid primary key default uuid_generate_v4(),
+  post_id uuid not null references public.posts(id) on delete cascade,
+  author_name text not null,
+  author_email text,
+  content text not null,
+  status text not null default 'approved' check (status in ('pending','approved','rejected')),
+  upvote_count integer not null default 0,
+  downvote_count integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+-- comment_votes
+create table if not exists public.comment_votes (
+  comment_id uuid references public.comments(id) on delete cascade,
+  voter_id uuid not null,
+  vote text not null check (vote in ('up','down')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (comment_id, voter_id)
+);
+
 -- media
 create table if not exists public.media (
   id uuid primary key default uuid_generate_v4(),
@@ -77,6 +100,8 @@ alter table public.posts enable row level security;
 alter table public.tags enable row level security;
 alter table public.categories enable row level security;
 alter table public.post_tags enable row level security;
+alter table public.comments enable row level security;
+alter table public.comment_votes enable row level security;
 alter table public.media enable row level security;
 alter table public.settings enable row level security;
 

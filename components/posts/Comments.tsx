@@ -168,15 +168,17 @@ export function Comments({ postId, initialComments = [], canModerate = false }: 
         return
       }
 
+      const createdComment = payload.comment
+
       setComments((prev) => [
         ...prev,
         {
-          id: payload.comment.id,
-          authorName: payload.comment.author_name || 'Anonymous',
-          content: payload.comment.content,
-          createdAt: payload.comment.created_at || new Date().toISOString(),
-          upvoteCount: payload.comment.upvote_count ?? 0,
-          downvoteCount: payload.comment.downvote_count ?? 0,
+          id: createdComment.id,
+          authorName: createdComment.author_name || 'Anonymous',
+          content: createdComment.content,
+          createdAt: createdComment.created_at || new Date().toISOString(),
+          upvoteCount: createdComment.upvote_count ?? 0,
+          downvoteCount: createdComment.downvote_count ?? 0,
         },
       ])
       setName('')
@@ -226,22 +228,23 @@ export function Comments({ postId, initialComments = [], canModerate = false }: 
         }
       }
 
-      if (!payload.comment) return
+      const updatedComment = payload.comment
+      if (!updatedComment) return
 
       setComments((prev) =>
-        prev.map((comment) =>
-          comment.id === commentId
+        prev.map((commentItem) =>
+          commentItem.id === commentId
             ? {
-                ...comment,
-                upvoteCount: payload.comment?.upvoteCount ?? comment.upvoteCount,
-                downvoteCount: payload.comment?.downvoteCount ?? comment.downvoteCount,
+                ...commentItem,
+                upvoteCount: updatedComment.upvoteCount ?? commentItem.upvoteCount,
+                downvoteCount: updatedComment.downvoteCount ?? commentItem.downvoteCount,
               }
-            : comment,
+            : commentItem,
         ),
       )
       setUserVotes((prev) => ({
         ...prev,
-        [commentId]: payload.comment?.userVote ?? null,
+        [commentId]: updatedComment.userVote ?? null,
       }))
     } catch (voteError) {
       console.error('Failed to vote on comment', voteError)

@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { randomUUID } from 'crypto'
 import { extname } from 'path'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth'
 import { getSupabaseClient } from '@/lib/supabase'
@@ -43,7 +43,7 @@ function sanitizeFileName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     await requireAdmin(req)
   } catch (error) {

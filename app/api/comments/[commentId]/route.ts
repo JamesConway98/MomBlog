@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { getSupabaseClient } from '@/lib/supabase'
+import { requireAdmin } from '@/lib/auth'
 
 type RouteContext = {
   params: Promise<{ commentId: string }>
@@ -18,22 +18,16 @@ export async function DELETE(_: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Invalid comment id' }, { status: 400 })
   }
 
-  const { userId } = auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-  }
-
-  const supabase = getSupabaseClient()
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .maybeSingle()
-
-  if (!profile || profile.role !== 'admin') {
+  try {
+    await requireAdmin()
+  } catch (error) {
+    if ((error as Error).message === 'Not authenticated') {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
     return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
   }
 
+  const supabase = getSupabaseClient()
   const { error } = await supabase.from('comments').delete().eq('id', commentId)
   if (error) {
     console.error('Failed to delete comment', error)

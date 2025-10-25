@@ -11,6 +11,9 @@ export default authMiddleware({
     }
 
     if (!auth.userId) {
+      if (req.method && req.method !== 'GET' && req.method !== 'HEAD') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
       return redirectToSignIn({ returnBackUrl: req.url })
     }
 

@@ -1,7 +1,8 @@
+import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
-import { auth } from '@clerk/nextjs/server'
 import { getSupabaseClient } from '@/lib/supabase'
+import { isAdmin } from '@/lib/auth'
 import { Comments } from '@/components/posts/Comments'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -10,7 +11,6 @@ export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params
   if (!slug) return notFound()
 
-  const { userId } = auth()
   const supabase = getSupabaseClient()
   const nowIso = new Date().toISOString()
   const { data: post } = await supabase
@@ -22,15 +22,7 @@ export default async function BlogPostPage({ params }: Props) {
     .maybeSingle()
   if (!post) return notFound()
 
-  let canModerate = false
-  if (userId) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .maybeSingle()
-    canModerate = profile?.role === 'admin'
-  }
+  const canModerate = await isAdmin()
 
   const { data: commentsData, error: commentsError } = await supabase
     .from('comments')
@@ -77,6 +69,29 @@ export default async function BlogPostPage({ params }: Props) {
         }))}
         canModerate={canModerate}
       />
+      <section className="mt-16 border-t border-black/10">
+        <div className="mx-auto max-w-3xl px-4 py-12">
+          <p className="eyebrow text-muted-foreground">The Mom Board App</p>
+          <h2 className="mt-4 text-3xl font-serif headline leading-tight">
+            My calm command center for family life.
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            I built the Mom Board app as a gentle home base for keeping routines, rituals, and the tiny triumphs
+            that make motherhood feel grounded. If you&apos;re juggling a full plate, it&apos;s the space I
+            use to keep everything steady.
+          </p>
+          <div className="mt-6">
+            <Link
+              href="https://momboardapp.com"
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-primary"
+            >
+              Explore Mom Board
+            </Link>
+          </div>
+        </div>
+      </section>
     </main>
   )
 }

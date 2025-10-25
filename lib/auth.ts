@@ -1,9 +1,11 @@
-import { auth, clerkClient } from '@clerk/nextjs/server'
+import { auth, clerkClient, getAuth } from '@clerk/nextjs/server'
+import type { NextRequest } from 'next/server'
 
 export const DEFAULT_ADMINS = ['jamesconway272@gmail.com', 'angelisetorresa@gmail.com']
 
 type ClerkClient = Awaited<ReturnType<typeof clerkClient>>
 type AdminUser = Awaited<ReturnType<ClerkClient['users']['getUser']>>
+type AuthState = Awaited<ReturnType<typeof getAuth>>
 
 function isAllowedAdmin(user: AdminUser) {
   const allowedEmails = (process.env.ADMIN_EMAILS || DEFAULT_ADMINS.join(','))
@@ -14,21 +16,32 @@ function isAllowedAdmin(user: AdminUser) {
   return userEmails.some((email) => allowedEmails.includes(email))
 }
 
-export async function getAuthState(request?: Request) {
-  if (request) {
-    const { userId } = await auth(request)
-    return { userId }
-  }
-  const { userId } = await auth()
-  return { userId }
+async function getClerkUser(userId: string) {
+  const client = await clerkClient()
+  return client.users.getUser(userId)
 }
 
-export async function requireAdmin(request?: Request) {
+export async function getAuthState(request?: NextRequest): Promise<AuthState> {
+  if (request) {
+    return await getAuth(request)
+  }
+  const { protect, redirectToSignIn, ...authState } = await auth()
+  return authState
+}
+
+export async function isAdmin(request?: NextRequest) {
+  const { userId } = await getAuthState(request)
+  if (!userId) return false
+
+  const user = await getClerkUser(userId)
+  return isAllowedAdmin(user)
+}
+
+export async function requireAdmin(request?: NextRequest) {
   const { userId } = await getAuthState(request)
   if (!userId) throw new Error('Not authenticated')
 
-  const client = await clerkClient()
-  const user = await client.users.getUser(userId)
+  const user = await getClerkUser(userId)
   console.info('[requireAdmin] verified user', userId)
 
   if (!isAllowedAdmin(user)) {
